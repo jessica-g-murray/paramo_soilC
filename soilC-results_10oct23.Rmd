@@ -1,0 +1,345 @@
+---
+title: "Ventisqueros soil C results"
+author: "Jessica G. Murray"
+date: "10/10/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(rstatix)
+library(car)
+
+```
+
+### Each dataframe was created with separate scripts:
+ #### tomst:
+ * TOMST file loop.R & ventisqueros tomst analysis.R
+    * I did the soil moisture curve calculations here. These may need to be revisited because our field values reach the curve's asymptote and it makes the data weird.
+    * More in-depth analyses of soil T and moisture by treatment in the tomst analysis script
+
+#### CO2:
+* ventisqueros co2 loop. R & ventisqueros CO2 analysis.R
+
+#### MBC: 
+* ventisqueros mbc and toc analysis.R (includes the loop for bringing in files as well)
+
+#### CN: 
+* vent_CN_inorgN_proc_analysis.R (this includes both inorg N and CN data processing)
+
+```{r dataframes, warning=FALSE,echo=TRUE}
+tomst <- read.csv("TOMST_master_oct20_june22.csv")
+CO2 <- read.csv("CO2_master_oct2023.csv")
+MBC <- read.csv("MBC.csv")
+CN <- read.csv("CN_inorgNmaster.csv")
+```
+
+
+Need to get the dates formatted correctly for merging, add some useful columns, and shave off unneeded ones.
+```{r tidying, echo=FALSE}
+
+CO2$tidydate = ymd_hms(CO2$Date)
+
+CO2 <- CO2 %>% 
+  mutate(Day = date(CO2$tidydate),
+         Hour = hour(CO2$tidydate),
+         Month = month(CO2$tidydate),
+         Year = year(CO2$tidydate)) 
+
+cleanCO2 <- CO2 %>% 
+  filter(Exp_R2 > 0.8) %>% 
+  mutate(CO2flux_umols_m2_s = if_else(Exp_Flux <0, NA, Exp_Flux), ## want positive fluxes only; negative fluxes are likely instrument error
+         season = if_else(Month %in% c("10","11","12"), "Wet", "Dry"), ## assign seasons
+         month_ch = case_when(
+           Month == "1" ~ "January",
+           Month == "2" ~ "February",
+           Month == "10" ~ "October",
+           Month == "11" ~ "November",
+           Month == "12" ~ "December"),
+         CO2_mgC_m2_h = CO2flux_umols_m2_s/1000000*12.001*1000*3600 # convert umols/m2/s to mgC/m2/h
+           )
+
+cleanCO2 <- cleanCO2 %>% 
+  select(Date, Block, Plot, Treatment, sensorID, tidydate, Day, Hour, Month, Year, Collar, CO2flux_umols_m2_s, CO2_mgC_m2_h, season, month_ch)
+
+tomst$tidydate <- ymd_hms(tomst$datetime_CR)
+
+## Making new columns for Day, Hour, Month, Year
+tomst <- tomst %>% 
+  mutate(tidydate = ymd_hms(tomst$datetime_CR),
+         Day = date(tomst$tidydate),
+         Hour = hour(tomst$tidydate),
+         Month = month(tomst$tidydate),
+         Year = year(tomst$tidydate)) %>% 
+  filter(Day >= '2021-10-01', Day <='2022-02-02')
+
+tomst <- tomst %>% 
+  mutate(VWC_cm3cm3 = ((0.0002*soilm_count)-0.1795), 
+         GSM_gg = ((-0.0000002*(soilm_count^2)) + (0.001*soilm_count) - 0.7437),
+         timeofday = if_else(Hour >=7 & Hour <=20, "day", "night"),
+         season = if_else(Month %in% c("10","11","12"), "Wet", "Dry"))
+```
+
+### How does microclimate differ by treatment?
+```{r microclimate, echo=TRUE}
+airTmod<-lmer(airT~Treatment*timeofday + (1|Collar), data=tomst)
+summary(airTmod)
+
+surfaceTmod<-lmer(surfaceT~Treatment*timeofday + (1|Collar), data=tomst)
+summary(surfaceTmod)
+
+soilTmod<-lmer(subsoilT~Treatment*timeofday + (1|Collar), data=tomst)
+summary(soilTmod)
+
+#for graphs of microclimate, see ventisqueros tomst analysis script
+
+## averaging microclim data by the hour so it can be merged with CO2.
+hourlytomst <- tomst %>%  
+  group_by(Collar, Day, Hour, Month, Year) %>% 
+  summarise(soilT = mean(subsoilT, na.rm=TRUE),
+            surfaceT = mean(surfaceT, na.rm=TRUE),
+            airT = mean(airT, na.rm = TRUE),
+            VWC = mean(VWC_cm3cm3, na.rm=TRUE),
+            GSM = mean(GSM_gg, na.rm = TRUE))
+
+tomstCO2 <- left_join(cleanCO2, hourlytomst, relationship = "many-to-many")
+
+## create a new column with "timepoint", since some measurements were done of 2-3 days "Day" doesn't really represent "timepoint"
+tomstCO2 <- tomstCO2 %>% 
+  mutate(timepoint = case_when(Day== "2021-10-25" | Day =="2021-10-26" |Day =="2021-10-24" ~ "10/25/21",
+                               Day == "2021-11-05" | Day == "2021-11-06"  ~ "11/05/21",
+                               Day =="2021-11-16" ~ "11/16/21",
+                               Day =="2021-12-01" | Day == "2021-12-03" ~ "12/1/21",
+                               Day =="2021-12-17" ~ "12/17/21",
+                               Day =="2022-01-04" ~ "1/04/22",
+                               Day =="2022-01-21" | Day == "2022-01-23" ~ "1/21/22",
+                               Day =="2022-02-02" ~ "2/02/22")) 
+tomstCO2$timepoint.tidy <- mdy(tomstCO2$timepoint)
+```
+
+Patterns in CO2 across time
+
+```{r CO2_temp, echo=FALSE}
+tomstCO2 %>% 
+  group_by(Treatment, timepoint.tidy) %>% 
+  summarise(mean_CO2 = mean(CO2_mgC_m2_h, na.rm=TRUE),
+            sd_CO2 = sd(CO2_mgC_m2_h, na.rm=TRUE)) %>% 
+  ggplot(aes(x=timepoint.tidy, y=mean_CO2, color=Treatment))+
+  geom_point() +
+  ylab("mg CO2-C / m2/ h") +
+  xlab("Timepoint") +
+  geom_errorbar(aes(ymin=mean_CO2-sd_CO2, ymax=mean_CO2+sd_CO2), width=1) +
+  scale_color_manual(values=c("control" = "skyblue3", "warming" = "brown3")) +
+  labs(title = "CO2 by treatment and timepoint", caption = "error bars represent sd")+
+  theme(axis.text = element_text(size=12), strip.text = element_text(size=12))
+  
+
+tomstCO2day <- tomstCO2 %>% 
+  group_by(Treatment, Block, Plot, Collar, Day, Month, Year, season) %>% 
+  summarise(mean_CO2_mgCm2h = mean(CO2_mgC_m2_h),
+            mean_soilT = mean(soilT),
+            mean_surfaceT = mean(surfaceT),
+            mean_airT = mean(airT),
+            mean_gsm = mean(GSM),
+            mean_VWC = mean(VWC))
+
+tempCO2mod <- lmer(mean_CO2_mgCm2h ~ mean_soilT + mean_surfaceT + mean_airT + mean_gsm + (1|Collar),data=tomstCO2day)
+vif(tempCO2mod)
+
+## surfaceT and airT are multicolinear so just one should be included, if either.
+
+tempCO2mod <- (lmer(mean_CO2_mgCm2h ~ mean_soilT + mean_gsm + Treatment + (1|Collar), 
+             data=tomstCO2day))
+
+summary(tempCO2mod)
+
+
+```
+### Examining treatment effects on CO2
+
+```{r CO2, echo=FALSE}
+tomstCO2day %>% 
+  ggplot(aes(x=Treatment, y = mean_CO2_mgCm2h, color=Treatment)) +
+  geom_boxplot() +
+  facet_wrap(~season) +
+  scale_color_manual(values=c("control" = "skyblue3", "warming" = "brown3"))+
+  ggtitle("CO2 by treatment and season")+
+  theme_classic()
+
+tomstCO2day$Block <- as.factor(tomstCO2day$Block)
+co2mod <- lmer(mean_CO2_mgCm2h~ Treatment * season * Block + (1|Collar), data=tomstCO2day)
+summary(co2mod)
+
+tomstCO2day %>% 
+  ggplot(aes(x=Treatment, y = mean_CO2_mgCm2h, color=Treatment)) +
+  geom_boxplot() +
+  facet_wrap(~Block) +
+  scale_color_manual(values=c("control" = "skyblue3", "warming" = "brown3"))+
+  theme_classic()
+
+
+tomstCO2day %>% 
+  ggplot(aes(x=as.factor(Block), y = mean_CO2_mgCm2h)) +
+  geom_boxplot() +
+  theme_classic()
+```
+
+### Season and block are significant main effects but there is no effect of treatment on CO2. Visually though, there looks to be an interaction between block and treatment when you look at overall patterns. 
+
+### What can the soil data tell us about the drivers behind this massive variation in response?
+
+### Adding soil data (TOC, CN, Inorg N)
+
+```{r soil, echo=FALSE}
+MBC$Block <- as.factor(MBC$Block)
+MBC <- MBC %>% 
+  mutate(plotid = paste0(Block, "-", Plot))
+
+CO2sum <- cleanCO2 %>%  
+  mutate(plotid = paste0(Block, "-", Plot)) %>% 
+  group_by(season, plotid, Treatment) %>% 
+  summarise(mean_CO2_umolsm2s = mean(CO2flux_umols_m2_s, na.rm=TRUE), 
+            mean_CO2_mg_m2h = mean(CO2_mgC_m2_h, na.rm=TRUE))
+
+CO2MBC <- left_join(CO2sum, MBC) # this has repeat observations for MBC and MBN for each season; should be subsetted
+
+CN$Block <- as.factor(CN$Block)
+CN <- CN %>% select(-X)
+CO2_MBC_CN <- left_join(CO2MBC, CN)
+
+CO2_MBC_CN <- CO2_MBC_CN %>% 
+  filter(plotid != "2-17") %>% 
+  mutate(DOC_per_MBC = mgC_gsoil_uf/MBC, #substrate C per unit MBC gives unit-less index
+         DCN = mgC_gsoil_uf/mgN_gsoil_uf, #CN of K2SO4-extractable substrate
+         MBCN = MBC/MBN, #CN of microbial biomass
+         CN_sub_by_MB = DCN/MBCN,
+         inorgN_mgN_gsoil = mgNH4_gsoil+mgNO3_gsoil) #an index of stoichiometry of substrate divided by microbial biomass
+
+
+wet_data <- CO2_MBC_CN %>% 
+  filter(season =="Wet")
+
+dry_data <- CO2_MBC_CN %>% 
+  filter(season=="Dry")
+
+```
+
+## how do soil variables vary across Blocks and treatments?
+
+
+```{r soilmods, echo=FALSE}
+
+summary(lm(percC ~ Block * Treatment, data=dry_data))
+
+summary(lm(percN ~ Block * Treatment, data= dry_data))
+
+summary(lm(MBC ~ Block * Treatment, data= dry_data))
+
+summary(lm(MBN ~ Block * Treatment, data= dry_data))
+
+summary(lm(C.N ~ Block * Treatment, data= dry_data))
+
+summary(lm(inorgN_mgN_gsoil ~ Block * Treatment, data= dry_data))
+
+summary(lm(mgC_gsoil_uf ~ Block * Treatment, data= dry_data))
+
+summary(lm(mgN_gsoil_uf ~ Block * Treatment, data= dry_data))
+
+summary(lm(DCN ~ Block * Treatment, data= dry_data))
+
+summary(lm(MBCN ~ Block * Treatment, data= dry_data))
+
+
+```
+
+### lm vs. aov give different results...aov gives basically no significant effects (main or interactive) but lm does, and it seems to be based on the different ways SS are calculated. Need to look into this more. 
+
+## Main takeaways: 
+### -> %C, %N, MBC, MBN, TDN are all higher in blocks 3 and/or 4
+### -> the C/N of microbial biomass is lower in blocks 3 and 4
+### -> %C is lower in warmed vs. control in block 4
+### -> soil C/N is lower in warmed vs. control in block 4
+### -> MBC is lower in warmed vs. control in block 2
+### -> C/N of dissolved substrate and the ratio of substrate C/N  is higher in the otcs vs. control in block 2
+
+### there are inherent differences between blocks (which we knew), likely driven by differences in OM content
+### in Block four, the lower C/N seems driven by reduced %C in warmed plots, though this doesn't appear to be due to higher CO2 respiration.
+
+### Warming reduced MBC and increased the C/N of the extractable substrate (i.e. DOC/TDN) in Block 2. It also appeared (non-significantly) to increase CO2 respiration in this block, so this seems kind of contradictory.
+
+
+```{r, co2soilmods, echo=FALSE}
+#wet_data and dry_data for CO2 ~ soil vars
+
+summary(lm(mean_CO2_mg_m2h ~ MBC + mgC_gsoil_uf + DCN, data= wet_data))
+
+summary(lm(mean_CO2_mg_m2h ~ MBC + mgC_gsoil_uf + DCN, data= dry_data))
+
+```
+## Next step: percent differences
+
+
+```{r percdiff, echo=FALSE}
+widedat <- CO2_MBC_CN %>% 
+  select(season, plotid, Block, Treatment, mean_CO2_mg_m2h, mgC_gsoil_uf, 
+         mgN_gsoil_uf, MBC, MBN, inorgN_mgN_gsoil, mgNO3_gsoil,mgNH4_gsoil,  percC, percN, C.N, DCN, MBCN) %>% 
+  pivot_wider(id_cols = c(plotid, season, Block),
+                names_from = Treatment,
+              values_from = c(mean_CO2_mg_m2h, mgC_gsoil_uf, 
+                              mgN_gsoil_uf, MBC, MBN, mgNH4_gsoil,mgNO3_gsoil, inorgN_mgN_gsoil, DCN,
+                              percC, percN, C.N, MBCN))
+
+p_data <- widedat %>% 
+  mutate(dCO2 = mean_CO2_mg_m2h_warming / mean_CO2_mg_m2h_control,
+         dDOC = mgC_gsoil_uf_warming / mgC_gsoil_uf_control,
+         dTDN = mgN_gsoil_uf_warming / mgN_gsoil_uf_control,
+         dMBC = MBC_warming /MBC_control,
+         dMBN = MBN_warming / MBN_control,
+         dNH4 = mgNH4_gsoil_warming / mgNH4_gsoil_control,
+         dNO3 = mgNO3_gsoil_warming / mgNO3_gsoil_control,
+         dinorgN = inorgN_mgN_gsoil_warming / inorgN_mgN_gsoil_control,
+         dpercC = percC_warming / percC_control,
+         dpercN = percN_warming / percN_control,
+         dCN = C.N_warming /C.N_control,
+         dDCN = DCN_warming/DCN_control,
+         dMBCN = MBCN_warming /MBCN_control)
+
+
+
+summary(lm(dpercC ~ percC_control +inorgN_mgN_gsoil_control , data=p_data))
+
+p_data %>% 
+  ggplot(aes(x=percC_control, y= dpercC)) +
+  geom_point() +
+  geom_hline(yintercept=1, linetype="dashed", color="black", size=1) +
+  ylab("ratio warm/control %C") +
+  xlab("soil %C, control") +
+  labs(title = "warm/con soil C in response to soil %C, control", caption = "y>1 = warm > con")+
+  theme(axis.text = element_text(size=12), strip.text = element_text(size=12))
+
+p_data %>% 
+  ggplot(aes(x=inorgN_mgN_gsoil_control, y= dpercC)) +
+  geom_point() +
+  geom_hline(yintercept=1, linetype="dashed", color="black", size=1) +
+  ylab("ratio warm/control %C") +
+  xlab("inorg N mg/gsoil, control") +
+  labs(title = "warm/con soil C in response to inorg N", caption = "y>1 = warm > con")+
+  theme(axis.text = element_text(size=12), strip.text = element_text(size=12))
+
+
+summary(lm(dCO2 ~ percC_control +inorgN_mgN_gsoil_control , data=p_data))
+
+p_data %>% 
+  ggplot(aes(x=percC_control, y= dCO2)) +
+  geom_point() +
+  geom_hline(yintercept=1, linetype="dashed", color="black", size=1) +
+  ylab("ratio warm/control CO2") +
+  xlab("% soil C, control") +
+  labs(title = "warm/con CO2 in response to soil %C (control)", caption = "y>1 = warm > con")+
+  theme(axis.text = element_text(size=12), strip.text = element_text(size=12))
+
+```
+
