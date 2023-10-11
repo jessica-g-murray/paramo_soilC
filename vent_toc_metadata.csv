@@ -1,0 +1,69 @@
+﻿sample_id,Block,Plot,TRT,Collar,Treatment,FUM,freshsoil_g,soilm_tin,soilm_wet_g,soilm_dry_tin,k2so4_L
+1-2 -CON FUM  ,1,2,con,1-2-con,control,fum,5.02,2.85,10.09,10.47,0.025
+1-4  CON FUM,1,4,con,1-4-con,control,fum,5.03,2.84,10.03,10.4,0.025
+1-5 CON FUM,1,5,con,1-5-con,control,fum,4.99,2.86,9.98,10.38,0.025
+1-7 CON FUM,1,7,con,1-7-con,control,fum,5.03,2.85,10.11,10.7,0.025
+1-9 CON FUM,1,9,con,1-9-con,control,fum,5.04,3.54,9.97,11.24,0.025
+2.17 CON FUM,2,17,con,2-17-con,control,fum,5.01,3.57,9.99,10.57,0.025
+2-18  CON FUM,2,18,con,2-18-con,control,fum,5,3.54,10.09,11.38,0.025
+2-20 CON FUM,2,20,con,2-20-con,control,fum,5.02,2.86,10.06,10.42,0.025
+3.3 CON FUM,3,3,con,3-3-con,control,fum,4.85,3.57,10.03,10.76,0.025
+3.12 CON FUM,3,12,con,3-12-con,control,fum,5.13,3.57,10.05,11.02,0.025
+3.14 CON FUN,3,14,con,3-14-con,control,fum,4.92,3.55,10.16,10.42,0.025
+3-16 CON FUM ,3,16,con,3-16-con,control,fum,5.11,3.57,10.1,10.25,0.025
+4-6 CON FUM,4,6,con,4-6-con,control,fum,5.11,2.71,10.09,10.16,0.025
+4-8  CON FUM,4,8,con,4-8-con,control,fum,4.9,3.53,10.05,10.59,0.025
+4-11 CON FUM,4,11,con,4-11-con,control,fum,4.94,3.54,9.93,10.76,0.025
+4-15 CON FUM,4,15,con,4-15-con,control,fum,4.94,1.03,10.02,8.99,0.025
+4-19 CON FUM,4,19,con,4-19-con,control,fum,4.91,3.59,10.06,11.01,0.025
+1-2 -WAR FUM UNF ,1,2,war,1-2-war,warming,fum,5.01,2.87,10.06,10.84,0.025
+1-4 WAR FUM,1,4,war,1-4-war,warming,fum,5,3.57,10.12,11.45,0.025
+1-5 WAR FUM,1,5,war,1-5-war,warming,fum,4.98,3.56,9.92,11.76,0.025
+1-7 WAR FUM,1,7,war,1-7-war,warming,fum,4.98,3.54,10.18,11.45,0.025
+1-9 WAR FUM ,1,9,war,1-9-war,warming,fum,4.98,2.86,9.95,10.51,0.025
+2-17 WAR FUM,2,17,war,2-17-war,warming,fum,5.03,17.72,10.03,25.36,0.025
+2-18  WAR FUM,2,18,war,2-18-war,warming,fum,4.98,3.55,10.08,11.74,0.025
+2-20  WAR FUM,2,20,war,2-20-war,warming,fum,5.05,3.62,10.01,11.59,0.025
+3-3  WAR FUM,3,3,war,3-3-war,warming,fum,4.99,2.95,9.95,10.84,0.025
+3.12  WARFUM,3,12,war,3-12-war,warming,fum,4.97,3.57,10.13,11.22,0.025
+3-14 WAR FUM,3,14,war,3-14-war,warming,fum,4.91,3.55,10.13,11.37,0.025
+3-16 WAR FUM,3,16,war,3-16-war,warming,fum,4.98,3.6,10.01,11.27,0.025
+4-6 WAR FUM,4,6,war,4-6-war,warming,fum,5.04,3.57,9.99,11.74,0.025
+4-8 WAR FUM,4,8,war,4-8-war,warming,fum,5.12,3.53,10.07,10.96,0.025
+4-11 WAR FUM,4,11,war,4-11-war,warming,fum,4.85,3.59,9.97,11.28,0.025
+4-15 WAR FUM,4,15,war,4-15-war,warming,fum,4.9,3.56,10.02,11.35,0.025
+4'19 WAR FUM,4,19,war,4-19-war,warming,fum,4.9,18.34,10.06,26.84,0.025
+1-2 CON UF,1,2,con,1-2-con,control,uf,5.01,2.85,10.09,10.47,0.025
+1-4 CON UF,1,4,con,1-4-con,control,uf,5.04,2.84,10.03,10.4,0.025
+1-5 CON UF,1,5,con,1-5-con,control,uf,5.01,2.86,9.98,10.38,0.025
+1-7  CON UF,1,7,con,1-7-con,control,uf,5.06,2.85,10.11,10.7,0.025
+1-9  CON UF,1,9,con,1-9-con,control,uf,5.03,3.54,9.97,11.24,0.025
+2-17  CON UF,2,17,con,2-17-con,control,uf,5.02,3.57,9.99,10.57,0.025
+2-18  CON UF,2,18,con,2-18-con,control,uf,5.05,3.54,10.09,11.38,0.025
+2-20 CON UF,2,20,con,2-20-con,control,uf,5.01,2.86,10.06,10.42,0.025
+3-3 CON UF,3,3,con,3-3-con,control,uf,5.11,3.57,10.03,10.76,0.025
+3-12 CON UF,3,12,con,3-12-con,control,uf,4.97,3.57,10.05,11.02,0.025
+3-14  CON UF,3,14,con,3-14-con,control,uf,5.08,3.55,10.16,10.42,0.025
+3-16 CON UF,3,16,con,3-16-con,control,uf,5.08,3.57,10.1,10.25,0.025
+4-6 CON UF,4,6,con,4-6-con,control,uf,5.08,2.71,10.09,10.16,0.025
+4-8 CON UF,4,8,con,4-8-con,control,uf,4.85,3.53,10.05,10.59,0.025
+4-11 CON UF,4,11,con,4-11-con,control,uf,4.99,3.54,9.93,10.76,0.025
+4-15 CON UF,4,15,con,4-15-con,control,uf,4.87,1.03,10.02,8.99,0.025
+4-19 CON UF,4,19,con,4-19-con,control,uf,5.1,3.59,10.06,11.01,0.025
+1-2 WAR UF,1,2,war,1-2-war,warming,uf,4.99,2.87,10.06,10.84,0.025
+1-4 WAR UF,1,4,war,1-4-war,warming,uf,5.01,3.57,10.12,11.45,0.025
+1-5  WAR UF,1,5,war,1-5-war,warming,uf,4.99,3.56,9.92,11.76,0.025
+1-7  WAR UF,1,7,war,1-7-war,warming,uf,5.01,3.54,10.18,11.45,0.025
+1-9  WAR UF,1,9,war,1-9-war,warming,uf,5.03,2.86,9.95,10.51,0.025
+2-17  WAR UF,2,17,war,2-17-war,warming,uf,5,17.72,10.03,25.36,0.025
+2-18  WAR UF,2,18,war,2-18-war,warming,uf,4.98,3.55,10.08,11.74,0.025
+2-20  WAR UF,2,20,war,2-20-war,warming,uf,5.05,3.62,10.01,11.59,0.025
+3-3 WAR UF,3,3,war,3-3-war,warming,uf,5,2.95,9.95,10.84,0.025
+3-12 WAR UF,3,12,war,3-12-war,warming,uf,4.91,3.57,10.13,11.22,0.025
+3-14 WAR UF,3,14,war,3-14-war,warming,uf,4.92,3.55,10.13,11.37,0.025
+3-16  WAR UF,3,16,war,3-16-war,warming,uf,4.89,3.6,10.01,11.27,0.025
+4-6 WAR UF,4,6,war,4-6-war,warming,uf,4.99,3.57,9.99,11.74,0.025
+4-8 WAR UF,4,8,war,4-8-war,warming,uf,5.13,3.53,10.07,10.96,0.025
+4-11 WAR UF,4,11,war,4-11-war,warming,uf,5.01,3.59,9.97,11.28,0.025
+4-15 WAR UF,4,15,war,4-15-war,warming,uf,4.88,3.56,10.02,11.35,0.025
+4-19 WAR UF,4,19,war,4-19-war,warming,uf,4.88,18.34,10.06,26.84,0.025
